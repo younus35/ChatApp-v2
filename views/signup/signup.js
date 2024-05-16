@@ -14,6 +14,8 @@ form.addEventListener('submit', async (event)=>{
     if(response.data.message == 'Email already exists'){
         const message = document.querySelector('.hidden')
         message.innerHTML = '<p class="text-center text-danger mt-2 mb-0">email already exist</p>'
+    }else{
+      alert("Successfuly signed up")
     }
    }
   catch(err){
