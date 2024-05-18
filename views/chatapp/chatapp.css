@@ -1,0 +1,12 @@
+.fixed-bottom {
+    background-color: black;
+    padding: 10px;
+}
+
+#emojiPicker {
+    display: none;
+    position: absolute;
+    bottom: 50px;
+    right: 0; /* Adjust this value to your preference */
+}
+
