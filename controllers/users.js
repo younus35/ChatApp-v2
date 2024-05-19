@@ -39,7 +39,7 @@ exports.signIn = async (req, res, next)=>{
         if(response.length > 0){
          const match = await bcrypt.compare(password, response[0].password);  
             if(match){
-             res.status(200).json({message:"User Logged In Successfully",token:exports.generateAccessToken(response[0].id, response[0].ispremiumuser)});
+             res.status(200).json({message:"User Logged In Successfully",token:exports.generateAccessToken(response[0].id)});
             }
             else{
              return res.status(401).json({message:"Password is Incorrect"});

@@ -11,7 +11,7 @@ form.addEventListener('submit', async(event)=>{
        if(response.status === 200){
           alert(response.data.message)
           localStorage.setItem('token', response.data.token);
-          window.location.href = "../expense/expense.html";
+          window.location.href = "../chatapp/chatapp.html";
        }else if(response.status === 401){
         alert(response.data.message);
        }

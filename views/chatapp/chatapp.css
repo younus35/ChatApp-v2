@@ -10,3 +10,7 @@
     right: 0; /* Adjust this value to your preference */
 }
 
+#messsages {
+    max-height: 70vh;
+    overflow-y: auto;
+}
