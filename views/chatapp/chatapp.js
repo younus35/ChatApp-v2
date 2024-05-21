@@ -1,10 +1,9 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     
     const emojiButton = document.getElementById('emojiButton');
     const emojiPicker = document.getElementById('emojiPicker');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
-    const messagesDiv = document.getElementById('messages');
 
     const token = localStorage.getItem('token');
 
@@ -26,6 +25,14 @@ document.addEventListener('DOMContentLoaded', () => {
             emojiPicker.style.display = 'none';
         }
     });
+
+    const response = await axios.get('http://localhost:3000/message/view-messages',{headers:{"Authorization":token}});
+    const all = response.data
+    all.forEach((message) =>{
+        // console.log(message.username) message.data.username gives error
+        newMessage(message);
+    })
+    
     
     sendButton.addEventListener('click', async (event) =>{
         event.preventDefault();
@@ -34,19 +41,24 @@ document.addEventListener('DOMContentLoaded', () => {
             try{
                 const response = await axios.post("http://localhost:3000/message/send-message",{ message: message },{headers:{"Authorization":token}})
                 //{ message: message } because req.body.message i am using if we use message i should only use req.body only
-                // Append the new message to the message display area
-                const newMessage = document.createElement('div');
-                newMessage.classList.add('message', 'mb-2', 'p-2', 'bg-light', 'rounded');
-                newMessage.textContent = `${response.data.username}: ${response.data.message}`;
-                messagesDiv.appendChild(newMessage);
-
-                // Clear the input field
-                messageInput.value = '';
+                newMessage(response.data);
             }
             catch(err){
                 console.log(err);
             }
         }
     })
-
 });
+
+function newMessage(message){
+    const messagesDiv = document.getElementById('messages');
+    
+    // Append the new message to the message display area
+    const newMessage = document.createElement('div');
+    newMessage.classList.add('message', 'mb-2', 'p-2', 'bg-light', 'rounded');
+    newMessage.textContent = `${message.username}: ${message.message}`;
+    messagesDiv.appendChild(newMessage);
+
+    // Clear the input field
+    messageInput.value = '';
+}

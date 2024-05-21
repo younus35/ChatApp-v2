@@ -16,3 +16,15 @@ exports.sendMessage = async (req, res, next) =>{
         console.log(err);
      }
 }
+
+exports.getMessage = async (req, res, next) =>{
+    try{
+       const messages = await Message.findAll({
+        where:{userId: req.user.id}
+       })
+       res.json(messages);
+    }
+    catch(err){
+        console.log(err);
+    }
+}
