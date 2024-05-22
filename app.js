@@ -8,6 +8,9 @@ const Message = require('./models/messages');
 
 app.use(cors());
 
+const dotenv = require("dotenv");
+dotenv.config();
+
 const userRoutes = require('./routes/users');
 const messageRoutes = require('./routes/messages');
 

@@ -1,6 +1,7 @@
 const Message = require('../models/messages');
 const User = require('../models/users');
 const sequelize = require('../util/database');
+const Sequelize = require('sequelize');
 
 exports.sendMessage = async (req, res, next) =>{
     const t = await sequelize.transaction();
@@ -19,8 +20,11 @@ exports.sendMessage = async (req, res, next) =>{
 
 exports.getMessage = async (req, res, next) =>{
     try{
-       const messages = await Message.findAll({
-        where:{userId: req.user.id}
+        const lastMessageId = req.query.lastMessageId || 0;
+        
+        const messages = await Message.findAll({
+        where: { id: { [Sequelize.Op.gt]: parseInt(lastMessageId) } },
+        order: [['createdAt', 'ASC']]
        })
        res.json(messages);
     }
