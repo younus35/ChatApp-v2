@@ -4,11 +4,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     const emojiPicker = document.getElementById('emojiPicker');
     const messageInput = document.getElementById('messageInput');
     const sendButton = document.getElementById('sendButton');
+    const groupList = document.getElementById('groupList');
+    const createGroupButton = document.getElementById('createGroupButton');
+    const messagesDiv = document.getElementById('messages');
+    const usersDiv = document.getElementById('users');
+    const inviteModal = new bootstrap.Modal(document.getElementById('inviteModal'));
+
 
     const token = localStorage.getItem('token');
+    
+    let displayedMessageIds = new Set();  // Set to keep track of displayed message IDs
 
-    let messages = JSON.parse(localStorage.getItem('messages')) || [];  // Set to keep track of displayed message IDs
-    let lastMessageId = messages.length > 0 ? messages[messages.length - 1].id:null;
+    let currentGroupId = null;
+    let messages = [];  
+    let lastMessageId = null;
 
     emojiButton.addEventListener('click', () => {
         if (emojiPicker.style.display === 'none') {
@@ -29,45 +38,187 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    const fetchGroups = async () => {
+        try {
+            const response = await axios.get('http://localhost:3000/group/my-groups', {
+                headers: { "Authorization": token }
+            });
+            const groups = response.data;
+            groupList.innerHTML = '';
+            groups.forEach(group => {
+                // console.log(group.group)
+                const groupItem = document.createElement('li');
+                groupItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
+                
+                const groupName = document.createElement('span');
+                groupName.textContent = group.group.name;
+                groupItem.appendChild(groupName);
+
+                const inviteButton = document.createElement('button');
+                inviteButton.textContent = 'Invite';
+                inviteButton.classList.add('btn', 'btn-primary');
+                inviteButton.addEventListener('click', () => {
+                    openInviteModal(group.group.id);
+                });
+                groupItem.appendChild(inviteButton);
+
+                groupItem.addEventListener('click', () => {
+                    console.log("clicked non global group")
+                    switchGroup(group.group.id);
+                    inviteModal.hide(); 
+                });
+                groupList.appendChild(groupItem);
+            });
+
+            // Add Global Group
+            const globalGroupItem = document.createElement('li');
+            globalGroupItem.classList.add('list-group-item');
+            globalGroupItem.textContent = 'Global';
+            globalGroupItem.addEventListener('click', () => {
+                console.log("clicked global group")
+                switchGroup(null)
+                currentGroupId = null; // Update the current group ID
+                inviteModal.hide();
+            });
+            groupList.appendChild(globalGroupItem);
+
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const openInviteModal = (groupId) => {
+        // Open the invitation modal
+        currentGroupId = groupId;
+        inviteModal.show();
+    };
+
     const fetchMessages = async () => {
        try{
-         const response = await axios.get('http://localhost:3000/message/view-messages',{
+        // console.log(currentGroupId)
+         const response = await axios.get(currentGroupId ? `http://localhost:3000/group-message/messages/${currentGroupId}` : 'http://localhost:3000/message/view-messages',{
             headers:{"Authorization":token},
             params: {lastMessageId}
         });
          const newMessages = response.data
-         console.log(newMessages)
-         newMessages.forEach((message) =>{
-            messages.push(message);
-         })
-         if (messages.length > 10) {
-            messages = messages.slice(-10);
+        //  console.log(newMessages)
+
+         if (newMessages.length > 0) {
+            lastMessageId = newMessages[newMessages.length - 1].id;
         }
-        localStorage.setItem('messages', JSON.stringify(messages));
-        lastMessageId = messages[messages.length - 1].id;
         
-        messages.forEach((message) =>{
-            newMessage(message);
-         })
+        newMessages.forEach(message => {
+            if (!displayedMessageIds.has(message.id)) {
+                displayedMessageIds.add(message.id);
+                messages.push(message);
+            }
+        });
+
+        messages.sort((a, b) => a.id - b.id);
+
+        // console.log(messages)
+        if (messages.length > 10) {
+            messages = messages.slice(-10);
+            displayedMessageIds = new Set(messages.map(msg => msg.id));
+        }
+
+        localStorage.setItem(currentGroupId ? `groupMessages-${currentGroupId}` : 'globalMessages', JSON.stringify(messages));
+        // console.log(messages[messages.length - 1].id)
+      
+        
         }
         catch(err){
          console.log(err);
         }
     }
-    // Call fetchMessages when the page loads
-    await fetchMessages();
+    
+    const fetchUsers = async () => {
+        try {
+            const response = await axios.get(currentGroupId ? `http://localhost:3000/group/${currentGroupId}/members` : 'http://localhost:3000/user/all-users', {
+                headers: { "Authorization": token }
+            });
+            const users = response.data;
+            usersDiv.innerHTML = '';
+            users.forEach(user => {
+                const userItem = document.createElement('div');
+                userItem.classList.add('user');
+                userItem.textContent = user.name;
+                usersDiv.appendChild(userItem);
+            });
+        } catch (err) {
+            console.log(err);
+        }
+    };
+    
+    const sendInvitations = async (groupId) => {
+        const invitationEmails = document.getElementById('invitationEmails').value;
 
-    // Periodically fetch messages every second
-    // setInterval(fetchMessages, 1000); for now task Lets make the Chat App real time not adding because sendmessages is inside dom
+        try {
+            const response = await axios.post('http://localhost:3000/group/invite', {
+                groupId: groupId, // Use the current group ID
+                emails: invitationEmails.split(',').map(email => email.trim())
+            }, {
+                headers: { "Authorization": token }
+            });
+            
+            console.log(response.data); // Handle success response
+            invitationEmails.value = ''; // Clear the input field
+            inviteModal.hide(); // Close the invitation modal
+        } catch (err) {
+            console.log(err); // Handle error
+        }
+        
+        inviteModal.hide();
+    };
+      
+    document.getElementById('sendInvitations').addEventListener('click', () => {
+        sendInvitations(currentGroupId);
+    });
+
+    const switchGroup = async (groupId) => {
+        currentGroupId = groupId;
+        lastMessageId = null;// Reset last message ID for the new group
+        messagesDiv.innerHTML = ''; // Clear current messages
+        usersDiv.innerHTML = ''; // Clear current users
+        messages = JSON.parse(localStorage.getItem(currentGroupId ? `groupMessages-${currentGroupId}` : 'globalMessages')) || [];
+        
+        displayedMessageIds = new Set(messages.map(msg => msg.id));
+
+        displayMessages();
+        await fetchUsers();
+        await fetchMessages();
+    };
+
+    const displayMessages = () => {
+        messagesDiv.innerHTML = ''; // Clear current messages
+        console.log(messages);
+        messages.forEach((message) => {
+            if (!currentGroupId) {
+                // console.log(message)
+                newMessage(message);
+            } else {
+                // console.log(message)
+                newGroupMessage(message, message);
+            }
+        });
+    }
 
     sendButton.addEventListener('click', async (event) =>{
         event.preventDefault();
         const message = messageInput.value;
         if(message){
             try{
-                const response = await axios.post("http://localhost:3000/message/send-message",{ message: message },{headers:{"Authorization":token}})
+                const response = await axios.post(currentGroupId ? "http://localhost:3000/group-message/send" : "http://localhost:3000/message/send-message",
+                { message: message, groupId: currentGroupId},
+                {headers:{"Authorization":token}})
                 //{ message: message } because req.body.message i am using if we use message i should only use req.body only
+                // console.log(response.data.name)
+                if(!currentGroupId){
                 newMessage(response.data);
+                }
+                else{
+                    newGroupMessage(response.data.createdMessage, response.data.name);
+                }
                 // Clear the input field
                 messageInput.value = '';
             }
@@ -76,8 +227,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     })
+
+    createGroupButton.addEventListener('click', async () => {
+        const groupName = prompt('Enter group name:');
+        if (groupName) {
+            try {
+                await axios.post('http://localhost:3000/group/create', { name: groupName }, {
+                    headers: { "Authorization": token }
+                });
+                await fetchGroups();
+            } catch (err) {
+                console.log(err);
+            }
+        }
+    });
+
     function newMessage(message){
-        const messagesDiv = document.getElementById('messages');
         
         // Append the new message to the message display area
         const newMessage = document.createElement('div');
@@ -85,4 +250,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         newMessage.textContent = `${message.username}: ${message.message}`;
         messagesDiv.appendChild(newMessage);
     }
+
+    function newGroupMessage(message, name){
+         // Append the new message to the message display area
+         const newMessage = document.createElement('div');
+         newMessage.classList.add('message', 'mb-2', 'p-2', 'bg-light', 'rounded');
+         newMessage.textContent = `${name.user.name}: ${message.message}`;
+         messagesDiv.appendChild(newMessage);
+    }
+
+    await fetchGroups();
+    //await switchGroup(null);
 });

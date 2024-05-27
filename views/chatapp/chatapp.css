@@ -14,3 +14,16 @@
     max-height: 70vh;
     overflow-y: auto;
 }
+
+#users {
+    display: flex;
+    flex-wrap: wrap; /* Allows wrapping to the next line if necessary */
+    gap: 10px; /* Adds space between user items */
+}
+
+.user {
+    padding: 10px;
+    background-color: lightgray;
+    border-radius: 5px;
+    /* Optionally add more styling here */
+}

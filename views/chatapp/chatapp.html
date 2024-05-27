@@ -19,21 +19,55 @@
           <a class="navbar-brand mx-auto" href="./chatapp.html">Chat-App</a>
         </div>
       </nav>
-    <div id="messages" class="container mt3 mb-1">
-        <!-- Messages will be appended here -->
-    </div>
-    <div class="fixed-bottom">
-        <div class="row align-items-center mb-1 mt-1">
-            <div class="col-10">
-                <input type="text" class="form-control" id="messageInput" placeholder="Type your message...">
+      <div class="container-fluid">
+        <div class="row">
+            <div class="col-3 bg-light vh-100" id="groupsContainer">
+                <h5 class="p-2">Groups</h5>
+                <ul class="list-group" id="groupList">
+                    <!-- Groups will be appended here -->
+                </ul>
+                <button class="btn btn-primary mt-2" id="createGroupButton">Create Group</button>
             </div>
-            <div class="col-2 d-flex ">
-                <button class="btn btn-primary me-3" id="sendButton">Send</button>
-                <button class="btn btn-danger me-3" id="logout">Logout</button>
-                <button class="btn btn-secondary" id="emojiButton">😊</button>
+            <div class="col-9">
+                <div id="users" class="container mt-3 mb-1">
+                    <!-- Users will be appended here -->
+                </div>
+                <div id="messages" class="container mt-3 mb-1">
+                    <!-- Messages will be appended here -->
+                </div>
+                <div class="fixed-bottom">
+                    <div class="row align-items-center mb-1 mt-1">
+                        <div class="col-10">
+                            <input type="text" class="form-control" id="messageInput" placeholder="Type your message...">
+                        </div>
+                        <div class="col-2 d-flex ">
+                            <button class="btn btn-primary me-3" id="sendButton">Send</button>
+                            <button class="btn btn-danger me-3" id="logout">Logout</button>
+                            <button class="btn btn-secondary" id="emojiButton">😊</button>
+                        </div>
+                    </div>
+                    <emoji-picker id="emojiPicker" style="display: none; position: absolute; bottom: 50px;"></emoji-picker>
+                </div>
             </div>
         </div>
-        <emoji-picker id="emojiPicker" style="display: none; position: absolute; bottom: 50px;"></emoji-picker>
+    </div>
+    <div class="modal fade" id="inviteModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Invite Users to Group</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Enter the email addresses of users you want to invite (separated by commas):</p>
+                    <textarea class="form-control" id="invitationEmails" rows="3"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="sendInvitations">Send Invitations</button>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.js"></script>

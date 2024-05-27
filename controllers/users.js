@@ -52,3 +52,15 @@ exports.signIn = async (req, res, next)=>{
         res.status(500).json({message:err});
     }
 }
+
+exports.allUsers = async (req, res, next) =>{
+    try{
+        const users = await User.findAll({
+            attributes: ['name'] // Select the attributes you want to return
+        });
+        res.json(users);
+    }
+    catch(err){
+        console.log(err);
+    }
+}
