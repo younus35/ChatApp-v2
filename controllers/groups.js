@@ -82,7 +82,7 @@ exports.getGroupMembers = async (req, res, next) => {
         }
         const members = await GroupMember.findAll({
             where: { groupId: groupId },
-            include: [{ model: User, attributes: ['name', 'email'] }]
+            include: [{ model: User, attributes: ['id' ,'name', 'email', 'phonenumber'] }]
         });
         res.json(members.map(m => m.user));
     } catch (err) {
@@ -90,3 +90,29 @@ exports.getGroupMembers = async (req, res, next) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+exports.removeMember = async (req, res, next) =>{
+    try{
+        const { userId } = req.params;
+        const { groupId } = req.body;
+
+        // Check if the current user is the creator of the group
+        const isCreator = await Group.findOne({
+            where: { id: groupId, createdBy: req.user.id }
+        });
+
+        if (!isCreator) {
+            return res.status(403).json({ message: 'Only the group creator can remove members' });
+        }
+
+        await GroupMember.destroy({
+            where: { groupId: groupId, userId: userId }
+        });
+
+        res.status(200).json({ message: 'User removed from the group successfully' });
+    }
+    catch(err){
+        console.log(err);
+        res.status(500).json({ message: err.message });
+    }
+}

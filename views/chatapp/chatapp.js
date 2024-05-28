@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const usersDiv = document.getElementById('users');
     const inviteModal = new bootstrap.Modal(document.getElementById('inviteModal'));
 
-
+    
     const token = localStorage.getItem('token');
     
     let displayedMessageIds = new Set();  // Set to keep track of displayed message IDs
@@ -261,4 +261,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await fetchGroups();
     //await switchGroup(null);
+    usersDiv.addEventListener('click', ()=>{
+        // console.log(currentGroupId);
+        localStorage.setItem('groupId', currentGroupId);
+        window.location.href = "../groupmembers/groupmembers.html"
+    })
 });
