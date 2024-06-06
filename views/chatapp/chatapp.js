@@ -9,8 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const messagesDiv = document.getElementById('messages');
     const usersDiv = document.getElementById('users');
     const inviteModal = new bootstrap.Modal(document.getElementById('inviteModal'));
-
-    
+       
     const token = localStorage.getItem('token');
     
     let displayedMessageIds = new Set();  // Set to keep track of displayed message IDs
@@ -18,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentGroupId = null;
     let messages = [];  
     let lastMessageId = null;
+
+    const socket = io('http://localhost:3000');
 
     emojiButton.addEventListener('click', () => {
         if (emojiPicker.style.display === 'none') {
@@ -62,9 +63,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 groupItem.appendChild(inviteButton);
 
-                groupItem.addEventListener('click', () => {
+                groupItem.addEventListener('click', async () => {
                     console.log("clicked non global group")
-                    switchGroup(group.group.id);
+                    await switchGroup(group.group.id);
                     inviteModal.hide(); 
                 });
                 groupList.appendChild(groupItem);
@@ -74,9 +75,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             const globalGroupItem = document.createElement('li');
             globalGroupItem.classList.add('list-group-item');
             globalGroupItem.textContent = 'Global';
-            globalGroupItem.addEventListener('click', () => {
+            globalGroupItem.addEventListener('click', async () => {
                 console.log("clicked global group")
-                switchGroup(null)
+                await switchGroup(null)
                 currentGroupId = null; // Update the current group ID
                 inviteModal.hide();
             });
@@ -184,9 +185,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         displayedMessageIds = new Set(messages.map(msg => msg.id));
 
-        displayMessages();
         await fetchUsers();
         await fetchMessages();
+        displayMessages();// Ensure messages are displayed after fetching
+
+        socket.emit('joinGroup', groupId);
     };
 
     const displayMessages = () => {
@@ -214,12 +217,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 //{ message: message } because req.body.message i am using if we use message i should only use req.body only
                 // console.log(response.data.name)
                 if(!currentGroupId){
-                newMessage(response.data);
+                  socket.emit('joinGroup', null);
+                   socket.emit('message', {message: response.data, groupId: null})
+                   await switchGroup(null);
                 }
                 else{
-                    newGroupMessage(response.data.createdMessage, response.data.name);
+                socket.emit('joinGroup', currentGroupId);
+                socket.emit('message', { message: response.data.createdMessage, groupId: currentGroupId, name: response.data.name});
                 }
-                // Clear the input field
                 messageInput.value = '';
             }
             catch(err){
@@ -227,6 +232,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
     })
+
+    socket.on('connect', () => {
+        console.log('Connected to WebSocket server');
+        if (currentGroupId === null) {
+            switchGroup(null); // Fetch global messages when connected to WebSocket server
+        }
+    });
+
+    socket.on('message', (data) => {
+        console.log('Received message:', data);
+        const groupId = data.groupId;
+        console.log(data)
+        if (groupId === null) {
+            console.log("inside socket global")
+            newMessage(data.message); // If groupId is null, it's a global message
+        } else {
+           if(groupId === currentGroupId){
+            console.log("inside group socket")
+            newGroupMessage(data.message, data.name); // If groupId is present, it's a group message
+          }
+        }
+    });
 
     createGroupButton.addEventListener('click', async () => {
         const groupName = prompt('Enter group name:');
@@ -260,7 +287,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await fetchGroups();
-    //await switchGroup(null);
     usersDiv.addEventListener('click', ()=>{
         // console.log(currentGroupId);
         localStorage.setItem('groupId', currentGroupId);

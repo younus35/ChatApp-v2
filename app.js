@@ -1,7 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const http = require('http');
+const {Server} = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server,{
+    cors:{
+        origin:'http://127.0.0.1:5500'
+    }
+})
 
 const User = require('./models/users');
 const Message = require('./models/messages');
@@ -9,7 +17,9 @@ const Group = require('./models/groups');
 const GroupMember = require('./models/groupmembers');
 const GroupMessage = require('./models/groupmessage');
 
-app.use(cors());
+app.use(cors({
+    origin: ["http://127.0.0.1:5500"]
+}));
 
 const dotenv = require("dotenv");
 dotenv.config();
@@ -46,10 +56,60 @@ GroupMessage.belongsTo(User);// GroupMessage belongs to User
 Group.hasMany(GroupMessage);// Group has many GroupMessages
 GroupMessage.belongsTo(Group); // GroupMessage belongs to Group
 
-
 sequelize
 .sync()
 .then(result =>{
-    app.listen(3000)
+    server.listen(3000, () =>{
+        console.log('Server is running on port 3000')
+    });
 })
 .catch(err => console.log(err));
+
+io.on('connection', (socket) =>{
+    console.log('A client connected');
+
+    socket.on('joinGroup', (groupId) => {
+        if (groupId) {
+            console.log(`User leaving global room`);
+            socket.leave('global');
+            console.log(`User joining group ${groupId}`);
+            socket.join(`group_${groupId}`);
+        } else {
+            console.log(`User leaving all group rooms`);
+            for (let room of socket.rooms) {
+                if (room.startsWith('group_')) {
+                    socket.leave(room);
+                }
+            }
+            console.log('User joining global room');
+            socket.join('global');
+        }
+    });
+    
+    socket.on('leaveGroup', (groupId) => {
+        if (groupId) {
+            console.log(`User leaving group ${groupId}`);
+            socket.leave(`group_${groupId}`);
+        } else {
+            console.log('User leaving global room');
+            socket.leave('global');
+        }
+    });
+
+    socket.on('message', (data) => {
+        const groupId = data.groupId;
+        console.log(`Received message in group ${groupId}`);
+        if (groupId) {
+            console.log("not global")
+            io.to(`group_${groupId}`).emit('message', data);
+        } else {
+            console.log("global")
+            io.to('global').emit('message', data);
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('A client disconnected');
+    })
+
+})
