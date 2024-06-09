@@ -1,3 +1,5 @@
+const socket = io('http://localhost:3000');
+
 document.addEventListener('DOMContentLoaded', async () => {
     
     const emojiButton = document.getElementById('emojiButton');
@@ -8,6 +10,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const createGroupButton = document.getElementById('createGroupButton');
     const messagesDiv = document.getElementById('messages');
     const usersDiv = document.getElementById('users');
+    const groupNameDisplay = document.getElementById('groupNameDisplay');
+    const fileInput = document.getElementById('fileInput');
+    const fileInputButton = document.getElementById('fileInputButton');
     const inviteModal = new bootstrap.Modal(document.getElementById('inviteModal'));
        
     const token = localStorage.getItem('token');
@@ -18,7 +23,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     let messages = [];  
     let lastMessageId = null;
 
-    const socket = io('http://localhost:3000');
 
     emojiButton.addEventListener('click', () => {
         if (emojiPicker.style.display === 'none') {
@@ -39,6 +43,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
+    fileInputButton.addEventListener('click', () => {
+        fileInput.click(); // Trigger click on file input when the button is clicked
+    });
+
+    fileInput.addEventListener('change', handleFileSelection);
+
+    function handleFileSelection(event) {
+        const file = event.target.files[0]; // Get the selected file
+        // For example, you can display the file name
+        console.log('Selected file:', file);
+    }
+
     const fetchGroups = async () => {
         try {
             const response = await axios.get('http://localhost:3000/group/my-groups', {
@@ -47,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const groups = response.data;
             groupList.innerHTML = '';
             groups.forEach(group => {
-                // console.log(group.group)
+                // console.log(group.group.name)
                 const groupItem = document.createElement('li');
                 groupItem.classList.add('list-group-item', 'd-flex', 'justify-content-between', 'align-items-center');
                 
@@ -67,6 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log("clicked non global group")
                     await switchGroup(group.group.id);
                     inviteModal.hide(); 
+                    // Update the group name display in the navbar
+                    groupNameDisplay.textContent = group.group.name;
                 });
                 groupList.appendChild(groupItem);
             });
@@ -80,6 +98,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 await switchGroup(null)
                 currentGroupId = null; // Update the current group ID
                 inviteModal.hide();
+                // Update the group name display in the navbar
+                groupNameDisplay.textContent = 'Global';
             });
             groupList.appendChild(globalGroupItem);
 
@@ -209,16 +229,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     sendButton.addEventListener('click', async (event) =>{
         event.preventDefault();
         const message = messageInput.value;
-        if(message){
+        const file = fileInput.files[0]; // Get the selected file
+        //console.log(file)
+        if(message || file){
             try{
+                // Create FormData object to send both text and fileUrl
+                const formData = new FormData();
+                formData.append('message', message);
+                formData.append('groupId', currentGroupId);
+                formData.append('file', file); // Append the file to FormData
+
                 const response = await axios.post(currentGroupId ? "http://localhost:3000/group-message/send" : "http://localhost:3000/message/send-message",
-                { message: message, groupId: currentGroupId},
-                {headers:{"Authorization":token}})
+                formData,
+                {headers:{"Authorization":token, "Content-Type": "multipart/form-data"}})
                 //{ message: message } because req.body.message i am using if we use message i should only use req.body only
                 // console.log(response.data.name)
                 if(!currentGroupId){
                   socket.emit('joinGroup', null);
-                   socket.emit('message', {message: response.data, groupId: null})
+                   socket.emit('message', {message: response.data, groupId: null, fileUrl:response.data})
                    await switchGroup(null);
                 }
                 else{
@@ -226,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 socket.emit('message', { message: response.data.createdMessage, groupId: currentGroupId, name: response.data.name});
                 }
                 messageInput.value = '';
+                fileInput.value = '';
             }
             catch(err){
                 console.log(err);
@@ -274,7 +303,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Append the new message to the message display area
         const newMessage = document.createElement('div');
         newMessage.classList.add('message', 'mb-2', 'p-2', 'bg-light', 'rounded');
-        newMessage.textContent = `${message.username}: ${message.message}`;
+        if(message.fileKey === null){
+            newMessage.textContent = `${message.username}: ${message.message}`;
+        }
+        else{
+            newMessage.innerHTML = `${message.username}: ${message.message} <a href="${message.fileKey}">view</a>`
+        }
         messagesDiv.appendChild(newMessage);
     }
 
@@ -282,7 +316,12 @@ document.addEventListener('DOMContentLoaded', async () => {
          // Append the new message to the message display area
          const newMessage = document.createElement('div');
          newMessage.classList.add('message', 'mb-2', 'p-2', 'bg-light', 'rounded');
-         newMessage.textContent = `${name.user.name}: ${message.message}`;
+         if(message.fileKey == null){
+            newMessage.textContent = `${name.user.name}: ${message.message}`;
+         }
+         else{
+            newMessage.innerHTML = `${name.user.name}: ${message.message} <a href="${message.fileKey}">view</a>"`;
+         }
          messagesDiv.appendChild(newMessage);
     }
 
@@ -292,4 +331,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         localStorage.setItem('groupId', currentGroupId);
         window.location.href = "../groupmembers/groupmembers.html"
     })
+});
+
+document.getElementById('logout').addEventListener('click', () => {
+    // Clear local storage
+    localStorage.clear();
+
+    // Close WebSocket connection
+    socket.disconnect();
+
+    // Redirect to sign-in page
+    window.location.href = "../signin/signin.html";
 });

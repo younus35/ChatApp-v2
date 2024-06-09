@@ -19,7 +19,9 @@ const GroupMessage = sequelize.define('groupMessage', {
     message: {
         type: Sequelize.TEXT,
         allowNull: false
-    }
+    },
+    // Add a single column to store the S3 file key or URL
+    fileKey: Sequelize.STRING // Store the S3 file key or URL
 }, {
     timestamps: true,
     createdAt: 'createdAt',

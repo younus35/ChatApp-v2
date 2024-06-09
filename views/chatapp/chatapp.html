@@ -15,9 +15,9 @@
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-          <a class="navbar-brand mx-auto" href="./chatapp.html">Chat-App</a>
-        </div>
+        <div class="container-fluid d-flex justify-content-center">
+            <p class="mb-0 text-white" id="groupNameDisplay">Group Name</p>
+          </div>
       </nav>
       <div class="container-fluid">
         <div class="row">
@@ -37,13 +37,19 @@
                 </div>
                 <div class="fixed-bottom">
                     <div class="row align-items-center mb-1 mt-1">
-                        <div class="col-10">
-                            <input type="text" class="form-control" id="messageInput" placeholder="Type your message...">
+                        <div class="col-9">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="messageInput" placeholder="Type your message...">
+                                <input type="file" id="fileInput" style="display: none;">
+                                <button class="btn btn-outline-secondary" type="button" id="fileInputButton">📎</button>
+                            </div>
                         </div>
-                        <div class="col-2 d-flex ">
-                            <button class="btn btn-primary me-3" id="sendButton">Send</button>
-                            <button class="btn btn-danger me-3" id="logout">Logout</button>
-                            <button class="btn btn-secondary" id="emojiButton">😊</button>
+                        <div class="col-3 d-flex align-items-center justify-content-end">
+                            <button class="btn btn-primary me-2" id="sendButton">Send</button>
+                            <button class="btn btn-secondary me-2" id="emojiButton">😊</button>
+                            <button class="btn btn-danger me-2" id="logout">Logout</button>
+                            <p class="mb-0 text-white">A Group Chat App</p>
+                        </div>
                         </div>
                     </div>
                     <emoji-picker id="emojiPicker" style="display: none; position: absolute; bottom: 50px;"></emoji-picker>
@@ -72,5 +78,5 @@
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.6.7/axios.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
-<script src="chatapp.js"></script>
+<script type="module" src="chatapp.js"></script>
 </html>

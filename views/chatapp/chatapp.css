@@ -3,6 +3,19 @@
     padding: 10px;
 }
 
+.fixed-bottom .row {
+    margin: 0;
+    padding: 0 15px; /* Adjust the padding if needed */
+}
+
+.fixed-bottom .input-group {
+    flex-grow: 1;
+}
+
+.fixed-bottom .d-flex {
+    flex-wrap: nowrap;
+}
+
 #emojiPicker {
     display: none;
     position: absolute;
@@ -10,7 +23,7 @@
     right: 0; /* Adjust this value to your preference */
 }
 
-#messsages {
+#messages {
     max-height: 70vh;
     overflow-y: auto;
 }
@@ -27,3 +40,29 @@
     border-radius: 5px;
     /* Optionally add more styling here */
 }
+
+.input-group {
+    display: flex;
+    flex-grow: 1;
+}
+
+.input-group input[type="text"] {
+    flex: 1;
+}
+
+.input-group button {
+    cursor: pointer;
+}
+
+.message img, .message video {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 5px 0;
+}
+
+.message a {
+    color: blue;
+    text-decoration: underline;
+}
+

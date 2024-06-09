@@ -4,6 +4,7 @@ const http = require('http');
 const {Server} = require('socket.io');
 
 const app = express();
+app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server,{
     cors:{
@@ -21,6 +22,7 @@ app.use(cors({
     origin: ["http://127.0.0.1:5500"]
 }));
 
+
 const dotenv = require("dotenv");
 dotenv.config();
 
@@ -31,12 +33,11 @@ const groupMessageRoutes = require('./routes/groupmessages');
 
 const sequelize = require('./util/database');
 
-app.use(express.json());
-
 app.use('/user', userRoutes)
 app.use('/message', messageRoutes)
 app.use('/group', groupRoutes)
 app.use('/group-message', groupMessageRoutes)
+
 
 User.hasMany(Message); // we can also use User.hasMany(Message, { foreignKey: "userId" }); its same
 Message.belongsTo(User);
