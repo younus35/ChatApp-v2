@@ -53,6 +53,7 @@ exports.signIn = async (req, res, next)=>{
     }
 }
 
+//to get all users in global group
 exports.allUsers = async (req, res, next) =>{
     try{
         const users = await User.findAll({

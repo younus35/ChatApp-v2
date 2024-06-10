@@ -19,11 +19,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     let displayedMessageIds = new Set();  // Set to keep track of displayed message IDs
 
-    let currentGroupId = null;
+    let currentGroupId = null; //keep track of groupId
     let messages = [];  
-    let lastMessageId = null;
+    let lastMessageId = null; // keeps track of last Message Id
 
-
+    //to handle emojis
     emojiButton.addEventListener('click', () => {
         if (emojiPicker.style.display === 'none') {
             emojiPicker.style.display = 'block';
@@ -36,13 +36,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         messageInput.value += event.detail.unicode;
         emojiPicker.style.display = 'none';
     });
-
+    
     document.addEventListener('click', (event) => {
         if (!emojiPicker.contains(event.target) && !emojiButton.contains(event.target)) {
             emojiPicker.style.display = 'none';
         }
     });
 
+    //to handle the input field in the html file
     fileInputButton.addEventListener('click', () => {
         fileInput.click(); // Trigger click on file input when the button is clicked
     });
@@ -55,13 +56,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('Selected file:', file);
     }
 
+    //used to fetch groups and handle the functions of what happens if we click the group
     const fetchGroups = async () => {
         try {
             const response = await axios.get('http://localhost:3000/group/my-groups', {
                 headers: { "Authorization": token }
             });
+            //get all the groups data for that user
             const groups = response.data;
             groupList.innerHTML = '';
+            //list each group
             groups.forEach(group => {
                 // console.log(group.group.name)
                 const groupItem = document.createElement('li');
@@ -153,6 +157,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
+    //get all the users for the required group
     const fetchUsers = async () => {
         try {
             const response = await axios.get(currentGroupId ? `http://localhost:3000/group/${currentGroupId}/members` : 'http://localhost:3000/user/all-users', {

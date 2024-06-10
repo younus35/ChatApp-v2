@@ -2,6 +2,8 @@ const Group = require('../models/groups');
 const GroupMember = require('../models/groupmembers');
 const User = require('../models/users');
 
+
+//controller to create group
 exports.createGroup = async (req, res, next) => {
     try {
         const groupName = req.body.name;
@@ -20,6 +22,7 @@ exports.createGroup = async (req, res, next) => {
     }
 }
 
+//adds the user to the group when we enter the emails in the invitation form
 exports.inviteToGroup = async (req, res, next) => {
     try {
         const { groupId, emails } = req.body;
@@ -58,6 +61,7 @@ exports.inviteToGroup = async (req, res, next) => {
     }
 }
 
+//this crontroller is used to get all the available groups from the GroupMemeber table for the required user
 exports.getGroups = async (req, res, next) => {
     try {
         const groups = await GroupMember.findAll({
@@ -71,6 +75,7 @@ exports.getGroups = async (req, res, next) => {
     }
 }
 
+//controller to get the all available users in that group
 exports.getGroupMembers = async (req, res, next) => {
     try {
         const { groupId } = req.params;
@@ -91,6 +96,7 @@ exports.getGroupMembers = async (req, res, next) => {
     }
 };
 
+//controller to remove the user from the group
 exports.removeMember = async (req, res, next) =>{
     try{
         const { userId } = req.params;

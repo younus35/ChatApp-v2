@@ -5,6 +5,7 @@ const Sequelize = require('sequelize');
 const s3 = require('../util/awsS3');
 const { v4: uuidv4 } = require('uuid');
 
+//contoller to send messages in global group, refer groupmessage controller (it is similar)
 exports.sendMessage = async (req, res, next) =>{
     const t = await sequelize.transaction();
     try{
